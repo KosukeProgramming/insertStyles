@@ -12,6 +12,52 @@ function my_plugin_options() {
     load_plugin_textdomain('your-unique-name', false, basename( dirname( __FILE__ ) ) . '/languages' );
 
     $add_db_url = '';
+    //  inc
+//    http://localhost:8888/wordpress/wp-content/themes/lightning/_g3/inc
+    function checkDir($dirNameInput, $dirNameURL) {
+        $dirUrl = $dirNameURL."/".$dirNameInput;
+        // echo "<br>";
+        // echo "あ".$dirNameURL;
+        // echo "<br>";
+        // echo "い".$dirNameInput;
+        if(is_dir($dirUrl)) {
+
+            if($dirNameSub = opendir($dirUrl)) {
+                while(($fileSub = readdir($dirNameSub)) !== false) {
+                if ($fileSub != "." && $fileSub != "..") {
+                    if($dirNameInput == "css") {
+                        echo "ファイル名".$fileSub;
+                        // echo "フルパス".$dirUrl;
+                        echo "<br>";
+
+                    }
+                    
+                    checkDir($fileSub, $dirUrl);
+                    
+                } 
+                }
+                closedir($dirNameSub);
+            }
+        } else {
+            return false;
+        }
+    }
+
+
+    // $dirName = get_template_directory();
+    $dirName = '/Applications/MAMP/htdocs/wordpress/wp-content/themes/lightning/_g3/';
+    echo $dirName;
+    if ($dir = opendir($dirName)) {
+        while (($file = readdir($dir)) !== false) {
+            if ($file != "." && $file != "..") {
+                echo $file;
+                checkDir($file, $dirName);
+                echo "<br>";
+            }
+        } 
+        closedir($dir);
+    }
+
     
     global $wpdb;
     //  チェックボックスにチェックが入っていたらデータを削除する
