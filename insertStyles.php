@@ -13,56 +13,73 @@ function my_plugin_options() {
     load_plugin_textdomain('your-unique-name', false, basename( dirname( __FILE__ ) ) . '/languages' );
 
     $add_db_url = '';
+    $a = [];
+    
+    /**
+     * テーマ内のCSSを取得する
+     */
     function checkDir($dirNameInput, $dirNameURL) {
+
         $dirUrl = $dirNameURL."/".$dirNameInput;
         
         if(is_dir($dirUrl)) {
 
             if($dirNameSub = opendir($dirUrl)) {
                 while(($fileSub = readdir($dirNameSub)) !== false) {
-                if ($fileSub != "." && $fileSub != "..") {
-                    if($dirNameInput == "css") {
-                        echo "<br>";
-                        echo "ファイル名".$fileSub;
-                        // echo "フルパス".$dirUrl;
-                        echo "<br>";
-
-                    }
-                    
-                    checkDir($fileSub, $dirUrl);
-                    
-                } 
+                    if ($fileSub != "." && $fileSub != "..") {
+                        if($dirNameInput == "css") {
+                            echo "<br>";
+                            echo "アイウ";
+                            echo $dirNameURL.$dirNameInput.'/'.$fileSub;
+                            $GLOBALS['a'][] = $dirNameURL.$dirNameInput.'/'.$fileSub;
+                            // print_r($arrayCssUrl);
+                            echo "<br>";
+                            
+                        }
+                        
+                        checkDir($fileSub, $dirUrl);
+                        
+                    } 
                 }
                 closedir($dirNameSub);
             }
-        } else {
-            return false;
-        }
+        } 
+        return false;
     }
 
+    // テーマディレクトリまでの絶対パス
+    $dirName = get_template_directory()."/";
+    // $dirName = '/Applications/MAMP/htdocs/wordpress/wp-content/themes/techis_wordpress/';
 
-    // $dirName = get_template_directory();
-    $dirName = '/Applications/MAMP/htdocs/wordpress/wp-content/themes/lightning/_g3/';
+    // テーマディレクトリにアクセス
     if ($dir = opendir($dirName)) {
+        // テーマディレクトリ直下のディレクトリを全て読み込む
         while (($file = readdir($dir)) !== false) {
+            // .と..のハードリンク以外のディレクトリを読み込む
             if ($file != "." && $file != "..") {
+                // テーマ直下ディレクトリ内の全CSSを取得する
                 checkDir($file, $dirName);
-                echo "<br>";
             }
         } 
+        // ディレクトリをクローズする
         closedir($dir);
     }
 
-    
+
+    print_r($GLOBALS['a']); // デバッグ用
+
+
     global $wpdb;
-    //  チェックボックスにチェックが入っていたらデータを削除する
+
+    //  以下、データを削除する処理
+    // チェックボックスにチェックが入っている時
     if (!empty($_POST['delete-url-checkbox'])) {
+        // チェックが入っているチェックボックスのIDを配列で取得する
         $delete_ids = $_POST['delete-url-checkbox'];
-        echo "チェック";
-        echo "<br>";
-        echo "<br>";
-        echo "<br>";
+
         $res = null;
+
+        // データベースからそれぞれのレコードを削除する
         foreach($delete_ids as $delete_id) {
             $res = $wpdb->delete(
                 "{$wpdb->prefix}add_style",
@@ -75,10 +92,10 @@ function my_plugin_options() {
             );
 
             if( 1 <= $res ) {
-                //　削除に成功
+                // 削除に成功
                 echo "削除成功";
             } else {
-                //　削除に失敗
+                // 削除に失敗
                 echo "削除失敗";
             }
             echo "<br>";
@@ -87,10 +104,10 @@ function my_plugin_options() {
     }
 
     
-    // 入力フォームにURLがあればデータを登録する
+    // 以下、データを登録する処理
     if(!empty($_POST['add-input'])) {
         $add_db_url = $_POST['add-input'];
-        // DBにデータを登録する
+        // データベースにデータを登録する
         $res1 = $wpdb->insert(
             "{$wpdb->prefix}add_style",
             array(
@@ -98,6 +115,7 @@ function my_plugin_options() {
                 'url' => $add_db_url,
             ),
         );
+
         if( 1 <= $res1 ) {
             // 削除に成功
             echo "登録成功";
@@ -108,17 +126,19 @@ function my_plugin_options() {
         echo "<br>";
     }
 
-    // DBからデータを全て取得する
+    // データベースに登録済みのデータを全て取得する
     $style_query = "SELECT * FROM {$wpdb->prefix}add_style";
     $results = $wpdb->get_results( $style_query, OBJECT );
-    
+
+    print_r($results); // デバッグ用
+
     // フィールドとオプション名の変数
     $hidden_field_name = 'mt_submit_hidden';
     $url_field_name = '';
     $add_text = '';
 
     // functions.phpのURL
-    $path_name = ABSPATH.'wp-content/themes/lightning/_g3/functions.php';
+    $path_name = get_template_directory().'/functions.php';
 
     // functions.phpの内容を取得する
     $functions_text =  file_get_contents($path_name);
@@ -165,23 +185,32 @@ function my_plugin_options() {
                         //   }
                         // 文字列を作成する  
                         $add_text .= "
-            if(is_front_page() || is_home()) {
-                wp_enqueue_style('{$result->name}', '{$result->url}');
-            };";
+                        if(is_front_page() || is_home()) {
+                            wp_enqueue_style('{$result->name}', '{$result->url}');
+                        };";
                     }
 
                     // 関数の終わりの文字
                     $add_text .= "} 
                 add_action('wp_enqueue_scripts', 'insertStyle');";
-                        // echo $add_text;
+                        echo "<br>";
+                        echo "<br>";
+
+                        echo $add_text;
+
+                        echo "<br>";
+                        echo "<br>";
+
                     // 書き換え後の文字列を取得 
-                    $fix_add_text = preg_replace('/function\sinsertStyle\(\)\s\{\s[\d\D.]+/', $add_text ,$functions_text);
+                    $fix_add_text = preg_replace('/function\sinsertStyle } 
+                    add_action(\'wp_enqueue_scripts\', \'insertStyle\')/', $add_text ,$functions_text);
                     // echo "置き換え前の文字列：：".$add_text;
                     // echo "<br>";
                     // echo "置き換え後の文字列：：".$fix_add_text;
 
                     // 書き換えを実行する
                     file_put_contents($path_name, $fix_add_text);
+                    
         
         }
     }   
@@ -204,9 +233,17 @@ function my_plugin_options() {
         <?php
 
         echo "追加するURLを入力してください。";
-        echo "<p><input type='url' name='add-input'></p>";
-
+        echo "<p><input type='text' name='add-input' list='example' class='input-url'></p>";
         ?>
+        <input type="hidden" value="" class="input-url-hidden">
+        <datalist id='example'>
+            <?php 
+                foreach($GLOBALS['a'] as $elem) {
+                    
+                    echo "<option value=".$elem."></option>";
+                }
+            ?>
+        </datalist>
         <?php
             foreach($results as $result) {
                
@@ -229,6 +266,15 @@ function my_plugin_options() {
     </form>
 </div>
 <?php } ?>
+<script>
+    $('#example').on('change', function () {
+        id = $("#example option[value='" + $(this).val() + "']").data('id');
+    });
+    jQuery('#submit-btn').click(function() {
+        $('#stage').val(id);
+        $('#search-btn').submit();
+    });
+</script>
 <?php
 
 
