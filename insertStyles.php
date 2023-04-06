@@ -2,6 +2,7 @@
 /*
  * Plugin Name: insertStyles
  */
+ 
 
 function my_plugin_options() {
 
@@ -12,20 +13,16 @@ function my_plugin_options() {
     load_plugin_textdomain('your-unique-name', false, basename( dirname( __FILE__ ) ) . '/languages' );
 
     $add_db_url = '';
-    //  inc
-//    http://localhost:8888/wordpress/wp-content/themes/lightning/_g3/inc
     function checkDir($dirNameInput, $dirNameURL) {
         $dirUrl = $dirNameURL."/".$dirNameInput;
-        // echo "<br>";
-        // echo "あ".$dirNameURL;
-        // echo "<br>";
-        // echo "い".$dirNameInput;
+        
         if(is_dir($dirUrl)) {
 
             if($dirNameSub = opendir($dirUrl)) {
                 while(($fileSub = readdir($dirNameSub)) !== false) {
                 if ($fileSub != "." && $fileSub != "..") {
                     if($dirNameInput == "css") {
+                        echo "<br>";
                         echo "ファイル名".$fileSub;
                         // echo "フルパス".$dirUrl;
                         echo "<br>";
@@ -46,11 +43,9 @@ function my_plugin_options() {
 
     // $dirName = get_template_directory();
     $dirName = '/Applications/MAMP/htdocs/wordpress/wp-content/themes/lightning/_g3/';
-    echo $dirName;
     if ($dir = opendir($dirName)) {
         while (($file = readdir($dir)) !== false) {
             if ($file != "." && $file != "..") {
-                echo $file;
                 checkDir($file, $dirName);
                 echo "<br>";
             }
@@ -116,7 +111,6 @@ function my_plugin_options() {
     // DBからデータを全て取得する
     $style_query = "SELECT * FROM {$wpdb->prefix}add_style";
     $results = $wpdb->get_results( $style_query, OBJECT );
-    print_r($results);
     
     // フィールドとオプション名の変数
     $hidden_field_name = 'mt_submit_hidden';
@@ -214,14 +208,13 @@ function my_plugin_options() {
 
         ?>
         <?php
-        print_r($results);
             foreach($results as $result) {
                
                 $style_name = $result->name;
         ?>
-                <p><span><?= $result->ID; ?></span><input  type='url' value="<?= $result->url; ?>" name="<?= $style_name; ?>"></p>
+                <p><span><?= $result->ID; ?></span><br><input class="regist-url" type='text' value="<?= $result->url; ?>" name="<?= $style_name; ?>" readonly></p>
                 
-                <input type='checkbox' name="delete-url-checkbox[]" value='<?= $result->ID; ?>'>削除するならチェック
+                <input type='checkbox' name="delete-url-checkbox[]" value='<?= $result->ID; ?>'>削除する
                 
         <?php 
     
@@ -238,8 +231,12 @@ function my_plugin_options() {
 <?php } ?>
 <?php
 
+
 function my_plugin_menu() {
+    $plugin_url = plugin_dir_url( __FILE__ );
+    wp_enqueue_style('insertStyles_style', $plugin_url.'style.css' );
     add_options_page('My Plugin Options', 'insertStyles','manage_options', 'my-unique-identifier', 'my_plugin_options' );
 }
 
 add_action('admin_menu', 'my_plugin_menu');
+
