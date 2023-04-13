@@ -2,7 +2,7 @@
 /*
  * Plugin Name: insertStyles
  */
- 
+ include 'insertStyles_functions.php';
 
 function my_plugin_options() {
 
@@ -68,6 +68,9 @@ function my_plugin_options() {
 
     print_r($GLOBALS['a']); // デバッグ用
 
+    // ページの種類
+    $selectPage = $_POST['page-select'];
+    var_dump($_POST);
 
     global $wpdb;
 
@@ -113,6 +116,7 @@ function my_plugin_options() {
             array(
                 'name' => '',
                 'url' => $add_db_url,
+                'page' => $selectPage,
             ),
         );
 
@@ -142,6 +146,8 @@ function my_plugin_options() {
 
     // functions.phpの内容を取得する
     $functions_text =  file_get_contents($path_name);
+
+    
 
     // データベースにデータがあれば追記処理を行う
     if(isset($results[0])) {
@@ -179,15 +185,8 @@ function my_plugin_options() {
                 $add_text .= "function insertStyle() {";
 
                     foreach($results as $result) {
-                        // // すでに登録済みのデータには何もしない
-                        // if ( preg_match("/$result->name/", $functions_text, $matches) ) {
-                        //     continue;
-                        //   }
                         // 文字列を作成する  
-                        $add_text .= "
-                        if(is_front_page() || is_home()) {
-                            wp_enqueue_style('{$result->name}', '{$result->url}');
-                        };";
+                        $add_text .= insertFrontStyle($result->name, $result->url, $result->page);
                     }
 
                     // 関数の終わりの文字
@@ -234,6 +233,13 @@ function my_plugin_options() {
 
         echo "追加するURLを入力してください。";
         echo "<p><input type='text' name='add-input' list='example' class='input-url'></p>";
+        echo "追加するページを選択してください。";
+        echo "<select name='page-select' id='page-select'>
+        <option value='top'>top</option>
+    <option value='page'>固定ページ</option>
+    <option value='post'>投稿ページ</option>
+</select>";
+        
         ?>
         <input type="hidden" value="" class="input-url-hidden">
         <datalist id='example'>
