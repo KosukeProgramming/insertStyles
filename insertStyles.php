@@ -4,6 +4,14 @@
  */
  include 'insertStyles_functions.php';
 
+
+$post_types = get_post_types( '', 'names' ); 
+
+foreach ( $post_types as $post_type ) {
+   echo '<p>' . $post_type . '</p>';
+}
+
+
 function my_plugin_options() {
 
     if ( !current_user_can( 'manage_options' ) )  {
