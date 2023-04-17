@@ -77,7 +77,10 @@ function my_plugin_options() {
     print_r($GLOBALS['a']); // デバッグ用
 
     // ページの種類
-    $selectPage = $_POST['page-select'];
+    if($_POST['page-select']) {
+        $selectPage = $_POST['page-select'];
+    }
+    
     var_dump($_POST);
 
     global $wpdb;
@@ -142,8 +145,6 @@ function my_plugin_options() {
     $style_query = "SELECT * FROM {$wpdb->prefix}add_style";
     $results = $wpdb->get_results( $style_query, OBJECT );
 
-    print_r($results); // デバッグ用
-
     // フィールドとオプション名の変数
     $hidden_field_name = 'mt_submit_hidden';
     $url_field_name = '';
@@ -151,9 +152,8 @@ function my_plugin_options() {
 
     // functions.phpのURL
     $path_name = get_template_directory().'/functions.php';
-
     // functions.phpの内容を取得する
-    $functions_text =  file_get_contents($path_name);
+    $functions_text = file_get_contents($path_name);
 
     
 
@@ -188,35 +188,33 @@ function my_plugin_options() {
                 file_put_contents($path_name, $add_text, FILE_APPEND | LOCK_EX);
 
         } else {
-
                 // 関数の始まりの文字
                 $add_text .= "function insertStyle() {";
 
-                    foreach($results as $result) {
-                        // 文字列を作成する  
-                        $add_text .= insertFrontStyle($result->name, $result->url, $result->page);
-                    }
+                foreach($results as $result) {
+                    // 文字列を作成する  
+                    $add_text .= insertFrontStyle($result->name, $result->url, $result->page);
+                }
 
-                    // 関数の終わりの文字
-                    $add_text .= "} 
-                add_action('wp_enqueue_scripts', 'insertStyle');";
-                        echo "<br>";
-                        echo "<br>";
+                echo "<br>";
+                echo "取得した文字列：".$functions_text;
+                echo "<br>";
 
-                        echo $add_text;
+                // 関数の終わりの文字
+                $add_text .= "} add_action('wp_enqueue_scripts', 'insertStyle');";
 
-                        echo "<br>";
-                        echo "<br>";
+                echo "<br>";
+                echo "追加する文字列：".$add_text;
+                echo "<br>";
 
-                    // 書き換え後の文字列を取得 
-                    $fix_add_text = preg_replace('/function\sinsertStyle } 
-                    add_action(\'wp_enqueue_scripts\', \'insertStyle\')/', $add_text ,$functions_text);
-                    // echo "置き換え前の文字列：：".$add_text;
-                    // echo "<br>";
-                    // echo "置き換え後の文字列：：".$fix_add_text;
+                // 書き換え後の文字列を取得 
+                $fix_add_text = preg_replace('/function insertStyle\(\) \{[\s\S]*\}.*add\_action\(\'wp\_enqueue\_scripts\', \'insertStyle\'\);$/s', $add_text ,$functions_text);
+                // echo "置き換え前の文字列：：".$add_text;
+                // echo "<br>";
+                echo "置き換え後の文字列：：".$fix_add_text;
 
-                    // 書き換えを実行する
-                    file_put_contents($path_name, $fix_add_text);
+                // 書き換えを実行する
+                file_put_contents($path_name, $fix_add_text);
                     
         
         }
